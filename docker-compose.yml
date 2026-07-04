@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  # Backend FastAPI - usa MongoDB local
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: helpdesk-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      # Usar host.docker.internal para acceder al MongoDB local desde el contenedor
+      - MONGODB_URL=mongodb://host.docker.internal:27017
+      - MONGODB_DB=helpdesk_db
+      - SECRET_KEY=${SECRET_KEY:-mi-clave-secreta-cambiar-en-produccion}
+      - ALGORITHM=${ALGORITHM:-HS256}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-1440}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+    networks:
+      - helpdesk-network
+
+  # Frontend Vue.js
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: helpdesk-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - helpdesk-network
+
+networks:
+  helpdesk-network:
+    driver: bridge
