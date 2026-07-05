@@ -1,0 +1,4 @@
+# Variables de entorno (Credenciales y Keys)
+.env
+backend/.env
+frontend/.env

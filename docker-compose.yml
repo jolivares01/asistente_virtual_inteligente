@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # Backend FastAPI - usa MongoDB local
+  # Backend FastAPI
   backend:
     build:
       context: ./backend
@@ -10,14 +10,11 @@ services:
     restart: unless-stopped
     ports:
       - "8000:8000"
-    environment:
-      # Usar host.docker.internal para acceder al MongoDB local desde el contenedor
-      - MONGODB_URL=mongodb://host.docker.internal:27017
-      - MONGODB_DB=helpdesk_db
-      - SECRET_KEY=${SECRET_KEY:-mi-clave-secreta-cambiar-en-produccion}
-      - ALGORITHM=${ALGORITHM:-HS256}
-      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-1440}
-      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+    
+    env_file:
+      - .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway" 
     networks:
       - helpdesk-network
 
@@ -30,6 +27,8 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
+    env_file:
+      - .env
     depends_on:
       - backend
     networks:

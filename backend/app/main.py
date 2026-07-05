@@ -6,6 +6,7 @@ import os
 from app.database import connect_to_mongo, close_mongo_connection
 from app.routes.auth import router as auth_router
 from app.routes.tickets import router as tickets_router
+from app.routes.chat import router as chat_router
 
 load_dotenv()
 
@@ -27,6 +28,8 @@ app.add_middleware(
 # Registrar rutas
 app.include_router(auth_router)
 app.include_router(tickets_router)
+# 💡 AGREGADO: Registramos el router del chat en la aplicación principal
+app.include_router(chat_router)
 
 @app.on_event("startup")
 async def startup():

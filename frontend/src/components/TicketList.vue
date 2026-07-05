@@ -35,11 +35,12 @@
         <p v-if="activeTab === 'pending'">No hay tickets pendientes</p>
         <p v-else>No hay tickets resueltos</p>
       </div>
+      
       <TicketCard
         v-for="ticket in (filteredTickets as any[])"
-        :key="ticket.id || ticket._id"
+        :key="`${activeTab}-${ticket.id_ticket}`"
         :ticket="ticket"
-        :is-selected="chatStore.currentTicket?.id === ticket.id_ticket"
+        :is-selected="chatStore.currentTicket?.id === String(ticket.id_ticket)"
         @click="selectTicket(ticket)"
       />
     </div>
@@ -66,34 +67,45 @@ const filteredTickets = computed(() => {
   let tickets = []
   
   if (activeTab.value === 'pending') {
-    tickets = ticketsStore.ticketsPendientes
+    tickets = ticketsStore.ticketsPendientes || []
   } else {
-    tickets = ticketsStore.ticketsResueltos
+    tickets = ticketsStore.ticketsResueltos || []
   }
 
   if (searchQuery.value && activeTab.value === 'resolved') {
-    const query = searchQuery.value.toLowerCase()
-    tickets = tickets.filter((t: any) => 
-      t.descripcion_ticket?.toLowerCase().includes(query) ||
-      t.id_ticket?.toLowerCase().includes(query) ||
-      t.resolucion_ticket?.toLowerCase().includes(query)
-    )
+    const query = searchQuery.value.toLowerCase().trim()
+    tickets = tickets.filter((t: any) => {
+      const idStr = String(t.id_ticket || '').toLowerCase()
+      const descStr = String(t.descripcion_ticket || '').toLowerCase()
+      const noteStr = String(t.note || '').toLowerCase()
+      
+      return descStr.includes(query) || idStr.includes(query) || noteStr.includes(query)
+    })
   }
 
   return tickets
 })
 
 const selectTicket = (ticket: any) => {
-  // Convertir el ticket de la base de datos al formato que espera el chat sus interfaces
+  const idStr = String(ticket.id_ticket)
+  
+  // Capturamos la descripción técnica completa (note para resueltos, descripcion_ticket para pendientes)
+  const fullDescription = ticket.note || ticket.descripcion_ticket || 'Sin descripción disponible.'
+
+  // Nos aseguramos de que la fecha se procese limpiamente como string ISO
+  const rawDate = ticket.fecha_creacion || ticket.created_dt
+  const formattedDate = rawDate ? new Date(rawDate).toISOString() : new Date().toISOString()
+
   const ticketForChat = {
-    id: ticket.id_ticket,
-    title: ticket.descripcion_ticket,
-    description: ticket.descripcion_ticket,
-    createdBy: ticket.creado_por || 'Usuario',
-    createdAt: ticket.fecha_creacion || new Date().toISOString(),
-    priority: ticket.prioridad || 'Media',
-    status: ticket.estado || 'pending'
+    id: idStr,
+    title: ticket.descripcion_ticket ? ticket.descripcion_ticket.substring(0, 50) + '...' : `Ticket #${idStr}`,
+    description: fullDescription,
+    createdBy: ticket.creado_por || 'Sistema CRM',
+    createdAt: formattedDate,
+    priority: ticket.prioridad || ticket.SLA_tickets || 'Media',
+    status: activeTab.value === 'pending' ? 'pending' : 'resolved'
   }
+  
   chatStore.setCurrentTicket(ticketForChat)
 }
 </script>

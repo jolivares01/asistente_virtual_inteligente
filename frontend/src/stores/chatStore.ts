@@ -42,7 +42,7 @@ export const useChatStore = defineStore('chat', () => {
   const sendMessage = async (content: string) => {
     if (!currentTicket.value) return
 
-    // Agregar mensaje del usuario
+    // Agregar mensaje del usuario en la UI
     messages.value.push({
       role: 'user',
       content,
@@ -52,34 +52,28 @@ export const useChatStore = defineStore('chat', () => {
     isProcessing.value = true
 
     try {
-      // Enviar al backend
       const response = await axios.post('/api/chat/send', {
-        mensaje: content,
-        sesion_id: sessionId.value,
-        id_ticket: currentTicket.value.id
+        message: content,                  // En lugar de 'mensaje'
+        session_id: sessionId.value,       // En lugar de 'sesion_id'
+        ticket_id: currentTicket.value.id  // En lugar de 'id_ticket'
       })
 
-      // Guardar session_id
-      if (response.data.sesion_id) {
-        sessionId.value = response.data.sesion_id
+      if (response.data.session_id) {
+        sessionId.value = response.data.session_id
       }
 
-      // Agregar respuesta del asistente
       messages.value.push({
         role: 'assistant',
-        content: response.data.respuesta,
+        content: response.data.response,  // En lugar de response.data.respuesta
         timestamp: new Date()
       })
 
     } catch (error) {
-      console.error('Error enviando mensaje:', error)
+      console.error('Error enviando mensaje a Gemini:', error)
       
-      // Respuesta de fallback si el backend falla
       const fallbackResponses = [
         `Del historial de los casos documentados, se evidencia que la mayoría de los casos son por error en la dirección de facturación.\n\n¿Quieres que te dé mayor detalle de esa incidencia?`,
-        
         `He encontrado documentación interna sobre este error.\n\n**Solución recomendada**:\n• Verificar consistencia de datos\n• Validar relaciones entre tablas\n• Ejecutar script de limpieza\n\n¿Necesitas acceso a los scripts de corrección?`,
-        
         `Para resolver esta incidencia, te sugiero seguir este plan:\n\n1. **Diagnóstico**: ${currentTicket.value?.description || 'Validar logs'}\n2. **Pasos a seguir**: Verificar estado, revisar configuración, aplicar corrección\n3. **Documentación**: Consultar KB-${currentTicket.value?.id || '0000'}\n\n¿Necesitas que elabore algún punto en particular?`
       ]
       

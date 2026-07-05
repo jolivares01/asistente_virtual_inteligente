@@ -14,8 +14,10 @@ export const useTicketsStore = defineStore('tickets', () => {
     try {
       const response = await axios.get('/api/tickets/pendientes')
       ticketsPendientes.value = response.data
+      // 💡 LOG DE DIAGNÓSTICO CRUCIAL
+      console.log('[Store] Tickets Pendientes cargados con éxito:', response.data)
     } catch (error) {
-      console.error('Error cargando tickets pendientes:', error)
+      console.error('[Store] Error cargando tickets pendientes:', error)
     } finally {
       loading.value = false
     }
@@ -27,14 +29,15 @@ export const useTicketsStore = defineStore('tickets', () => {
     try {
       const response = await axios.get('/api/tickets/resueltos')
       ticketsResueltos.value = response.data
+      console.log('[Store] Tickets Resueltos cargados con éxito:', response.data)
     } catch (error) {
-      console.error('Error cargando tickets resueltos:', error)
+      console.error('[Store] Error cargando tickets resueltos:', error)
     } finally {
       loading.value = false
     }
   }
 
-  // Cargar todos los tickets
+  // Cargar todos los tickets de forma simultánea
   const loadAllTickets = async () => {
     await Promise.all([
       loadTicketsPendientes(),
@@ -42,7 +45,7 @@ export const useTicketsStore = defineStore('tickets', () => {
     ])
   }
 
-  // Computed properties
+  // Propiedades computadas para los contadores de las pestañas
   const pendingCount = computed(() => ticketsPendientes.value.length)
   const resolvedCount = computed(() => ticketsResueltos.value.length)
 
